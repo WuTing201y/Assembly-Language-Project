@@ -1,15 +1,16 @@
 INCLUDE Irvine32.inc
 
 .data
-GRID_SIZE     DWORD 3                  ; 地圖大小
-MAX_ROUNDS    DWORD 5                  ; 最大回合數
-playAgain     DWORD 1                  ; 是否繼續遊戲
-score         DWORD 0                  ; 玩家得分
-rounds        DWORD 0                  ; 已進行回合數
-startTime     DWORD ?                  ; 開始時間
-endTime       DWORD ?                  ; 結束時間
-elapsedTime   REAL8 ?                  ; 花費時間
-grid          DWORD GRID_SIZE * GRID_SIZE DUP(0) ; 地圖資料
+GRID_SIZE     DWORD 3                   ; 地圖大小
+GRID_SIZE_SQ  DWORD 9                   ; GRID_SIZE * GRID_SIZE (3x3)
+MAX_ROUNDS    DWORD 5                   ; 最大回合數
+playAgain     DWORD 1                   ; 是否繼續遊戲
+score         DWORD 0                   ; 玩家得分
+rounds        DWORD 0                   ; 已進行回合數
+startTime     DWORD ?                   ; 開始時間
+endTime       DWORD ?                   ; 結束時間
+elapsedTime   REAL8 ?                   ; 花費時間
+grid          DWORD 9 DUP(0)            ; 地圖資料 (3x3), 9 個 DWORD 初始化為 0
 
 prompt1       BYTE "歡迎來到打地鼠遊戲！", 0
 prompt2       BYTE "地圖大小為 3x3，每回合隨機出現一隻地鼠。", 0
@@ -78,7 +79,7 @@ game_end:
     mov edx, offset prompt9
     call WriteString
     ; 輸出時間
-    call WriteDouble
+    call WriteReal8
 
     ; 問玩家是否再來一局
     mov edx, offset prompt3
@@ -107,8 +108,18 @@ print_row:
 print_col:
     cmp ebx, GRID_SIZE
     jge next_row       ; 下一行
-    ; 根據 grid 顯示相應符號
-    mov eax, [grid + ecx*GRID_SIZE*4 + ebx*4] ; 取得 grid[i][j] 的值
+
+    ; 計算偏移量
+    mov eax, ecx
+    mov edx, ebx
+    mov esi, GRID_SIZE
+    imul eax, esi     ; eax = i * GRID_SIZE
+    imul edx, 4       ; j * 4
+    add eax, edx      ; eax = (i * GRID_SIZE + j) * 4
+    lea edi, [grid + eax] ; 計算實際偏移量
+
+    ; 讀取 grid[i][j] 的值
+    mov eax, [edi]
     cmp eax, 0
     je print_empty
     mov edx, offset prompt5 ; 顯示打中
@@ -139,14 +150,16 @@ generateMole PROC
     mov ebx, edx      ; 保存隨機數，列索引
     ; 清空地圖
     mov ecx, 0
-    mov edx, GRID_SIZE*GRID_SIZE
+    mov edx, GRID_SIZE_SQ
 clear_grid:
-    mov [grid + ecx*4], 0
+    lea edi, [grid + ecx*4]
+    mov [edi], 0
     inc ecx
     cmp ecx, edx
     jl clear_grid
     ; 設定隨機位置為地鼠
-    mov dword ptr [grid + eax*GRID_SIZE*4 + ebx*4], 1
+    lea edi, [grid + eax*GRID_SIZE*4 + ebx*4]
+    mov dword ptr [edi], 1
     ret
 generateMole ENDP
 
@@ -173,35 +186,38 @@ playerTurn PROC
     cmp ebx, GRID_SIZE
     jge invalid_input
 
-    ; 檢查打中地鼠
-    mov edx, [grid + eax*GRID_SIZE*4 + ebx*4]
+    ; 計算偏移量並檢查是否打中地鼠
+    mov esi, GRID_SIZE
+    imul eax, esi     ; eax = row * GRID_SIZE
+    imul ebx, 4       ; col * 4
+    add eax, ebx      ; eax = (row * GRID_SIZE + col) * 4
+    lea edi, [grid + eax] ; 計算偏移量
+
+    mov edx, [edi]
     cmp edx, 1
-    jne miss_hit
-
-    ; 打中地鼠
-    mov edx, offset prompt5
-    call WriteString
-    mov eax, 1
-    ret
-
-miss_hit:
+    je hit_mole
     mov edx, offset prompt6
     call WriteString
-    mov eax, 0
+    ret
+
+hit_mole:
+    mov edx, offset prompt5
+    call WriteString
+    inc dword ptr [score]  ; 增加分數
     ret
 
 invalid_input:
     mov edx, offset prompt7
     call WriteString
-    mov eax, 0
     ret
 playerTurn ENDP
 
-; 計算時間差函數
+; 計算遊戲花費時間函數
 calculateElapsedTime PROC
-    ; 使用時間差公式計算花費時間
-    ; 這部分較為複雜，需要轉換時間格式並計算差值
+    ; 計算時間差
+    fld QWORD PTR [endTime]
+    fsub QWORD PTR [startTime]
+    fstp QWORD PTR [elapsedTime] ; 輸出花費時間
     ret
 calculateElapsedTime ENDP
-
 END main
