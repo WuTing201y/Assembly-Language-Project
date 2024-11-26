@@ -7,6 +7,7 @@
 int u; // 全區變量
 
 int same(int num[]); // 函數聲明
+void record_time(time_t start_time, time_t end_time); // 記錄時間函數聲明
 
 void menu() // 函數聲明
 {
@@ -54,6 +55,10 @@ void game(int a[]) // 比較用戶輸入數和隨機數，並產生提示訊息
 {
     int b[4] = {0};
     int i = 0, j = 0;
+
+    time_t start_time, end_time; // 用來記錄遊戲的開始和結束時間
+    time(&start_time); // 記錄開始時間
+
     while (1)
     {
         // 生成4個隨機數字
@@ -66,6 +71,7 @@ void game(int a[]) // 比較用戶輸入數和隨機數，並產生提示訊息
         if (a[0] != 0)
             break;
     }
+
     int k = 1, A = 0, B = 0, N = 8, pick = 0;
     printf("Please input your guess of the four digits\n");
     while (A != 4 && k <= N)
@@ -100,12 +106,20 @@ void game(int a[]) // 比較用戶輸入數和隨機數，並產生提示訊息
     }
     if (A != 4 && k > 8)
     {
-        printf("Game failed!\n");
+        puts("");
+        printf("Game failed!\n\n");
         printf("The correct answer is: ");
         for (i = 0; i < 4; i++)
             printf("%d", a[i]);
         printf("\n");
     }
+
+    // 記錄遊戲結束時間
+    time(&end_time);
+
+    // 計算所用時間並顯示
+    record_time(start_time, end_time); // 顯示花費時間
+
     printf("Enter 1 to continue the game, enter 2 to return to the menu, enter 0 to exit the game: ");
     while (1)
     {
@@ -147,4 +161,11 @@ int same(int num[]) // 判斷產生的隨機數各個位置上有沒有重複的
             if (num[i] == num[j])
                 u = 1;
     return u;
+}
+
+// 顯示遊戲花費的時間
+void record_time(time_t start_time, time_t end_time)
+{
+    double time_taken = difftime(end_time, start_time); // 計算時間差
+    printf("You took %.2f seconds to complete the game.\n\n", time_taken); // 顯示所用時間
 }
