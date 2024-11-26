@@ -10,11 +10,11 @@ int same(int num[]); // 函數聲明
 
 void menu() // 函數聲明
 {
-    printf("\t\t\t\tGuess Number Game\n\n\n\n");
-    printf("\t\t\t\t1. Start Game\n\n");
-    printf("\t\t\t\t2. Help\n\n");
-    printf("\t\t\t\t3. Exit\n\n");
-    printf("\t\t\tPlease enter (1-3): ");
+    printf("Guess Number Game\n\n");
+    printf("1. Start Game\n\n");
+    printf("2. Help\n\n");
+    printf("3. Exit\n\n");
+    printf("Please enter (1-3): ");
 }
 
 // 主函數
@@ -22,7 +22,7 @@ int main()
 {
     void help(); // 函數聲明
     void game(int a[]); // 函數聲明
- 
+
     int k = 0, select = 0;
     int a[4] = { 0 };
     srand((unsigned)time(NULL)); // 隨機數種，只調用一次即可
@@ -50,7 +50,7 @@ void help() // 遊戲規說明函數
     printf("Press any key to continue............\n");
 }
 
-void game(int a[]) // 比較用戶輸入數四和隨機數，並產生提示訊息
+void game(int a[]) // 比較用戶輸入數和隨機數，並產生提示訊息
 {
     int b[4] = {0};
     int i = 0, j = 0;
