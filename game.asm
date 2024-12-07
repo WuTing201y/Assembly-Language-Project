@@ -1,121 +1,122 @@
-
-.386
-.model flat, stdcall
-.stack 4096
-include Irvine32.inc
-
 .data
-a DWORD 4 DUP(?)       ; 存放隨機生成的數字
-b DWORD 4 DUP(?)       ; 存放玩家輸入的數字
-A DWORD ?              ; A 的數量
-B DWORD ?              ; B 的數量
-N DWORD 8              ; 最大嘗試次數
-pick DWORD ?           ; 玩家輸入的數字
+randomNum DWORD 4 DUP(?)   ; 存放隨機生成的數字
+input DWORD 4 DUP(?)       ; 存放玩家輸入的數字
+pick DWORD ?               ; 玩家輸入的數字
+tryCase DWORD 8            ; 最大嘗試次數
+A_count DWORD ?            ; A 的數量
+B_count DWORD ?            ; B 的數量
 msgInput BYTE "Please input your guess of the four digits:", 0
 msgAttempt BYTE "Attempt %d: ", 0
 msgInvalid BYTE "Invalid input!", 0
-msgSuccess BYTE "Congratulations, game successful!", 0
+msgWin BYTE "Congratulations, game successful!", 0
 msgFail BYTE "Game failed!", 0
 msgAnswer BYTE "The correct answer is: ", 0
 msgExit BYTE "Enter 1 to continue the game, enter 2 to return to the menu, enter 0 to exit the game:", 0
 
+
 .code
-main PROC
-    ; 初始化隨機種子
-    call Randomize
-    
-    ; 生成隨機數組
-GenerateRandom:
-    mov ecx, 4           ; 生成 4 個隨機數字
-    lea esi, a
-GenLoop:
-    call RandomRange
-    mov ebx, 10          ; 取範圍 0-9
+
+Game PROC
+    call Randomize  ; same as srand(time(NULL))
+
+GenerateRandomNum:
+    mov ecx, 4
+    lea esi, randomNum
+
+GenerateLoop:
+    call RandomRange  ; generate Random Number
+    mov ebx, 10     ; range from 0 to 9
     xor edx, edx
     div ebx
-    mov [esi], eax
+    mov [esi], dl  ; highest posi is arr[3], remainder store in edx and 0~9 only in dl register
     add esi, 4
-    loop GenLoop
+    loop GenerateLoop
 
-    ; 遊戲提示輸入
+
+; 玩家輸入input
     lea edx, msgInput
     call WriteString
     call Crlf
 
 GameLoop:
-    ; 輸入玩家數字
-    lea edx, msgAttempt
+    lea esx, msgAttempt
     mov ecx, 1
     call WriteString
-    call ReadInt
+    call RealInt
     mov pick, eax
 
-    ; 驗證輸入有效性
+    ; is valid?
     cmp pick, 1000
     jl InvalidInput
     cmp pick, 9999
     jg InvalidInput
 
-    ; 將玩家輸入拆分為單個數字
+    ; seperate input to single number
     mov eax, pick
-    lea esi, b
-    mov ecx, 4
-ExtractDigits:
-    xor edx, edx
-    mov ebx, 10
-    div ebx
-    mov [esi + ecx * 4 - 4], edx
-    loop ExtractDigits
+    lea esi, input
+    mov ecx, 4   ; set loop time
 
-    ; 比對數字
-    xor A, A
-    xor B, B
+SeperateInput:
+    xor edx, edx  ; same as mov edx, 0 but xor is faster
+    mov ebx, 10
+    div ebx       ; quotient store in eax, reminder store in edx
+    mov [esi + ecx*4 - 4], edx  ;倒序存入
+    loop SeperateInput
+
+    ; check Input if it's right
+    xor randomNum, randomNum
+    xor input, input
     mov ecx, 4
-    lea esi, a
-    lea edi, b
+    lea esi, A_count
+    lea edi, B_count
 CompareLoop:
     mov eax, [esi]
     mov ebx, [edi]
     cmp eax, ebx
-    je CorrectPosition
-    cmp eax, [edi+4]
-    je WrongPosition
-    cmp eax, [edi+8]
-    je WrongPosition
-    cmp eax, [edi+12]
-    je WrongPosition
+    je CorrectPosi
+
+    cmp eax, [ebx + 4]
+    je WrongPosi
+    cmp eax, [ebx + 8]
+    je WrongPosi
+    cmp eax, [ebx + 12]
+    je WrongPosi
+
     jmp NextCompare
 
-CorrectPosition:
-    inc A
+CorrectPosi:
+    inc A_count
     jmp NextCompare
-WrongPosition:
-    inc B
+
+WrongPosi:
+    inc B_count
+    jmp NextCompare
+
 NextCompare:
     add esi, 4
     loop CompareLoop
 
-    ; 顯示結果
-    mov eax, A
-    mov ebx, B
+    ; output result
+    mov eax, A_count
+    mov ebx, B_count
     call WriteDec
     call Crlf
 
-    ; 判斷勝負
-    cmp A, 4
+    ; win or lose?
+    cmp A_count, 4
     je GameWin
-    cmp ecx, N
+    cmp ecx, tryCase
     je GameFail
     jmp GameLoop
 
 InvalidInput:
-    lea edx, msgInvalid
+    lea, edx, msgInvalid
     call WriteString
     call Crlf
     jmp GameLoop
 
 GameWin:
-    lea edx, msgSuccess
+    lea edx, msgWin
     call WriteString
     call Crlf
     jmp EndGame
@@ -125,32 +126,27 @@ GameFail:
     call WriteString
     call Crlf
 
-    ; 顯示正確答案
+    ;output answer
     lea edx, msgAnswer
     call WriteString
-    lea esi, a
+    lea esi, randomNum
     mov ecx, 4
-PrintAnswer:
-    mov eax, [esi]
-    call WriteDec
-    add esi, 4
-    loop PrintAnswer
-    call Crlf
-    jmp EndGame
 
 EndGame:
-    lea edx, msgExit
+    lea edxm msgExit
     call WriteString
     call ReadInt
-    cmp eax, 1
-    je GenerateRandom
-    cmp eax, 2
+    
+    cmp eax, 1   ; again
+    je GenerateRandomNum
+
+    cmp eax, 2  ; back to home
     je main
+
     cmp eax, 0
-    je Exit
+    je Exit     ;end
 
 Exit:
     call ExitProcess
-main ENDP
 
-END main
+Game ENDP
