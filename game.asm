@@ -1,3 +1,12 @@
+INCLUDE Irvine32.inc
+
+!
+gotoend PROC
+    exit
+gotoend ENDP
+!
+
+
 .data
 randomNum DWORD 4 DUP(?)   ; 存放隨機生成的數字
 input DWORD 4 DUP(?)       ; 存放玩家輸入的數字
@@ -15,6 +24,9 @@ msgExit BYTE "Enter 1 to continue the game, enter 2 to return to the menu, enter
 
 
 .code
+main PROC
+    call Game
+main ENDP
 
 Game PROC
     call Randomize  ; same as srand(time(NULL))
@@ -39,10 +51,13 @@ GenerateLoop:
     call Crlf
 
 GameLoop:
-    lea esx, msgAttempt
+    mov A_count, 0
+    mov B_count, 0
+
+    lea edx, msgAttempt
     mov ecx, 1
     call WriteString
-    call RealInt
+    call ReadInt
     mov pick, eax
 
     ; is valid?
@@ -64,8 +79,8 @@ SeperateInput:
     loop SeperateInput
 
     ; check Input if it's right
-    xor randomNum, randomNum
-    xor input, input
+    xor randomNum, 0
+    xor input, 0
     mov ecx, 4
     lea esi, A_count
     lea edi, B_count
@@ -110,7 +125,7 @@ NextCompare:
     jmp GameLoop
 
 InvalidInput:
-    lea, edx, msgInvalid
+    lea edx, msgInvalid
     call WriteString
     call Crlf
     jmp GameLoop
@@ -133,7 +148,7 @@ GameFail:
     mov ecx, 4
 
 EndGame:
-    lea edxm msgExit
+    lea edx, msgExit
     call WriteString
     call ReadInt
     
@@ -146,7 +161,7 @@ EndGame:
     cmp eax, 0
     je Exit     ;end
 
-Exit:
-    call ExitProcess
-
 Game ENDP
+
+
+END main
