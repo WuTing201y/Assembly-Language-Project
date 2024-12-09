@@ -1,281 +1,295 @@
+問題一: 隨機數第一位和第四位重複 creatNUM函數
+問題二: 比較答案不正確 CompareNumbers函數
+
 INCLUDE Irvine32.inc
 
-
-
 .data
-randNums DWORD 4 dup(0)      ; 用於存放四個隨機數
-buffer DWORD 20 dup(0)       ; 緩衝區
+randNums DWORD 4 DUP(0)      ; 隨機生成的四個數字
+input DWORD ?                ; 玩家輸入
+seperateInput DWORD 4 DUP(0) ; 玩家輸入的分解數字
+A DWORD 0                    ; 正確數字和位置
+B DWORD 0                    ; 正確數字但位置錯誤
+tryCase DWORD 8              ; 最大嘗試次數
+newline BYTE 13, 10, 0
+startGame DWORD 0                    ; 是否為第一局遊戲
+gameState DWORD 0
+userInputResult DWORD ?
 
-input DWORD ?             ; 玩家輸入的數字
-seperateInput DWORD 4 DUP(0)
-
-A DWORD 0            ; A 的數量
-B DWORD 0            ; B 的數量
-
-tryCase DWORD 8            ; 最大嘗試次數
 
 msgInput BYTE "Please input your guess of the four digits:", 0
 msgAttempt BYTE "Attempt: ", 0
-msgInvalid BYTE "Invalid input!", 0
+msgInvalid BYTE "Invalid input! Please try again.", 0
 msgWin BYTE "Congratulations, game successful!", 0
 msgFail BYTE "Game failed!", 0
-
-msgA db "A", 0
-msgB db "B", 0
-
-msgAnswer db "The correct answer is: ", 0
-newline db 13, 10, 0
+msgA BYTE "A", 0
+msgB BYTE "B", 0
+msgAnswer BYTE "The correct answer is: ", 0dh, 0ah, 0
+msgEndGame BYTE "Thanks for playing!", 0dh, 0ah, 0
+msgContinue BYTE "Enter 1 to continue the game.", 0dh, 0ah, 0
 
 .code
-;---------------------------
-GenerateUniqueRandom PROC
-        ; 初始化隨機數
-;---------------------------
+main PROC
+; 主程式
 
+    NewGame:
+        mov edx, OFFSET msgInput    ; 請玩家輸入訊息
+        call WriteString
+	    call Crlf
+        mov tryCase, 8         ; 初始化最大嘗試次數
         call Randomize
+        call creatNUM
+        mov randNums, eax
+        
 
-        ; 生成不重複的四個數字
-        xor ecx, ecx            ; ECX 作為索引，指向 randNums
 
-    generateLoop:
-        ; 生成一個隨機數
-        mov eax, 10             ; 隨機數範圍 0-9
-        call RandomRange        ; 返回隨機數在 EAX
-        mov ebx, eax              ; 保存生成的隨機數到 BL
+        lea esi, randNums
+        mov ecx, 4
+
+        showAnswer:
+            mov eax, [esi]
+            call WriteDec
+            add esi, 4
+            loop showAnswer
+            call Crlf
+
+
+
+
+        call userInput
+        mov userInputResult, eax 
+        
+        jmp continueGame          ; 僅在適當情況下跳轉
+        
+
+    continueGame:
+		lea edx, OFFSET msgContinue   ; 詢問是否下一局
+		call WriteString
+        call Readchar
+        cmp al, '1'
+		je NewGame
+        cmp al, '0'            ; 如果輸入 '0'，結束遊戲
+        je EndGame
+        
+
+    EndGame:
+		mov edx, OFFSET msgEndGame  ; output end message
+		call WriteString
+
+    invoke ExitProcess, 0
+
+main ENDP
+
+;---------------------------
+creatNUM PROC
+; Creat random number(0 ~ 9) to game, saving in EAX.
+;---------------------------
+    
+    LOCAL i : DWORD            ; 循環計數器
+    LOCAL isDuplicate : DWORD  ; 是否有重複數字
+    
+    mov i, 0                   ; 初始化計數器
+    lea esi, OFFSET randNums
+
+    create:
+        call Randomize
+        call Random32
+        mov edx, 0           ; 餘數在edx
+        mov ebx, 10
+        div ebx              ; ebx=10 用於rand%10
+        mov eax, edx         ; 首位存入EAX[0]
 
         ; 檢查是否重複
-        lea esi, randNums       ; ESI 指向 randNums 陣列
-        mov edx, ecx            ; 將當前索引作為計數器
+        mov isDuplicate, 0
+        mov ecx, i
+        mov ebx, 0
 
     checkDuplicate:
-        cmp edx, 0              ; 若已檢查完所有已有數字
-        je storeNumber          ; 若無重複，跳至存數字
-        mov eax, [esi]  ; 取陣列中的數字到 AL
-        cmp eax, ebx             ; 比較生成的數字與現有數字
-        je generateLoop         ; 如果重複，重新生成
-        add esi, 4               ; 檢查下一個數字
-        dec edx                 ; 減少計數器
-        jmp checkDuplicate      ; 繼續檢查
+        cmp ebx, ecx
+        jge storeNUM
+        mov edx, [esi + ebx * 4]
+        cmp eax, edx
+        jne nextCheck
+        mov isDuplicate, 1
+        jmp create
+    
+    nextCheck:
+        inc ebx
+        jmp checkDuplicate
 
-    storeNumber:
-        mov [randNums + ecx * 4], ebx ; 存入數字到陣列
-        inc ecx                 ; 增加索引
-        cmp ecx, 4              ; 是否已生成 4 個數字
-        jne generateLoop        ; 如果未生成 4 個數，繼續
+    storeNUM:
+        cmp isDuplicate, 1
+        je create
+        mov edx, i
+        shl edx, 2
+        mov [esi + edx], eax
+        inc i
+        cmp i, 4
+        jl create
+        
+    ret
+ creatNUM ENDP       
+
+
+;---------------------------
+SplitInput PROC
+    ; 將輸入的整數拆解為陣列
+;---------------------------
+
+    mov eax, input
+    mov esi, OFFSET seperateInput
+    mov ecx, 4
+
+    L1:
+        cmp ecx, 0
+        je quit
+        mov edx, 0
+        mov ebx, 10
+        div ebx
+        sub ecx, 1
+        mov [esi + ecx * 4], edx
+        cmp ecx, 0
+        jne L1
+
+    quit:
 
     ret
-GenerateUniqueRandom ENDP
+SplitInput ENDP
+
+;---------------------------
+CompareNumbers PROC
+; 比較玩家輸入與生成的數字
+;---------------------------
+    LOCAL i : DWORD
+
+    mov A, 0
+    mov B, 0
+
+    mov esi, OFFSET randNums
+    mov edi, OFFSET seperateInput
+    mov ecx, 4
+
+compareOuter:
+    cmp ecx, 0
+    je quit
+    sub ecx, 1
+    mov eax, [esi + ecx * 4]        ; 第四位開始比對
+    mov i, 4      ; b[i]位置
+
+    compareInner:
+        cmp i, 0
+        je skipMatch
+
+        mov ebx, i
+        dec ebx
+        shl ebx, 2
+        mov ebx, [edi + ebx]      ; b[4]~b[1]比對
+        cmp eax, ebx                    ;a[4]先與b[4]比
+        
+        jne skipMatch                   ; 不同
+        cmp ecx, i                      ; 
+        je incrementA
+        inc B
+        jmp skipMatch
+
+incrementA:
+    inc A
+
+    skipMatch:
+        dec i
+        cmp i, 0
+        jne compareInner        ; b還沒比完
+        loop compareOuter       ; b比完了
+    quit:
+
+    ret
+CompareNumbers ENDP
 
 ;---------------------------
 userInput PROC
-; 玩家輸入
+; 處理玩家輸入
+; EAX = 0 -> WIN
+; EAX = 1 -> CONTINUE
+; EAX = 2 -> FAIL
 ;---------------------------
-        ; 每次輸入前重置 A 和 B
-        mov A, 0
-        mov B, 0
 
-        lea edx, msgInput
+
+
+input00:
+    cmp tryCase, 0
+    je gameFail
+
+    lea edx, msgAttempt
+    call WriteString
+    call ReadInt
+    mov input, eax
+
+    ; 驗證輸入
+    cmp input, 0
+    jl wrong
+    cmp input, 9999
+    jg wrong
+
+    ; 拆解輸入並比較
+    call SplitInput
+    call CompareNumbers
+
+    ; 顯示結果
+    mov eax, A
+    call WriteDec
+    lea edx, msgA
+    call WriteString
+
+    mov eax, B
+    call WriteDec
+    lea edx, msgB
+    call WriteString
+    call Crlf
+
+    ; 判定遊戲結果
+    cmp A, 4
+    je gameWin
+    dec tryCase
+    cmp tryCase, 0
+    je gameFail
+    mov eax, 1
+    jmp input00
+
+    wrong:
+        lea edx, msgInvalid
         call WriteString
         call Crlf
-        
-        ContinueInput:
-            lea edx, msgAttempt
-            mov ecx, 1
-            call WriteString
+        jmp input00
 
-            call ReadInt
-            mov input, eax
+    gameWin:
+        lea edx, msgWin
+        call WriteString
+        call Crlf
+        mov eax, 0
+        jmp quit
 
-            dec tryCase
+    gameFail:
+        lea edx, msgFail
+        call WriteString
 
-            ; 判斷是否有效
-            cmp input, 0
-            jl InvalidInput
-            cmp input, 9999
-            jg InvalidInput
+        ; 顯示正確答案
+        lea edi, msgAnswer
+        call WriteString
 
+        lea esi, randNums
+        mov ecx, 4
 
-            ; 拆分input到seperateInput
-            mov eax, input
-            lea esi, seperateInput      ;將指標指向seperateInput起始位址
-            mov ecx, 4                  ; 設置迴圈次數
-
-            Seperate:
-                    xor edx, edx
-                    mov ebx, 10
-                    div ebx
-                    mov [esi + ecx*4 -4], edx
-                    loop Seperate
-
-           
-            lea esi, randNums       ; 所求
-            lea edi, seperateInput  ; 所猜
-            mov ecx, 4              ; 設置迴圈次數
-            
-
-; 差在第二次之後的位置
-; 比較第一個位元
-; 比較第二個位元
-            Compare:
-                    mov ecx, 4              ; 設置迴圈次數
-                    lea esi, randNums       ; 所求
-                    lea edi, seperateInput  ; 所猜
-
-                    L1:
-                        mov eax, [esi]      ; 所求 放到 eax暫存器裡
-                        mov ebx, [edi]      ; 所猜 放到 ebx暫存器裡
-                        cmp eax, ebx
-                        je Correct1
-                        cmp eax, [edi + 4]  ;比較 所求的第一位數與所猜的第二位數
-                        je Wrong1
-                        cmp eax, [edi + 8]
-                        je Wrong1
-                        cmp eax, [edi + 12]
-                        je Wrong1
-                        jmp L2
-
-                            Correct1:
-                                inc A
-                                jmp L2
-
-                            Wrong1:
-                                inc B
-                                jmp L2
-
-                        L2:                           
-                            mov eax, [esi + 4]
-                            cmp eax, [edi + 4]
-                            je Correct2
-                            cmp eax, [edi]
-                            je Wrong2
-                            cmp eax, [edi + 8]
-                            je Wrong2
-                            cmp eax, [edi + 12]
-                            je Wrong2
-                            jmp L3
-
-                                Correct2:
-                                    inc A
-                                    jmp L3
-
-                                Wrong2:
-                                    inc B
-                                    jmp L3
-
-                            L3:                           
-                                mov eax, [esi + 8]
-                                cmp eax, [edi + 8]
-                                je Correct3
-                                cmp eax, [edi]
-                                je Wrong3
-                                cmp eax, [edi + 4]
-                                je Wrong3
-                                cmp eax, [edi + 12]
-                                je Wrong3
-                                jmp L4
-
-                                    Correct3:
-                                        inc A
-                                        jmp L4
-
-                                    Wrong3:
-                                        inc B
-                                        jmp L4
-
-                                L4:                           
-                                    mov eax, [esi + 12]
-                                    cmp eax, [edi + 12]
-                                    je Correct4
-                                    cmp eax, [edi]
-                                    je Wrong4
-                                    cmp eax, [edi + 4]
-                                    je Wrong4
-                                    cmp eax, [edi + 8]
-                                    je Wrong4
-                                    jmp printAB
-
-                                        Correct4:
-                                            inc A
-                                            jmp printAB
-
-                                        Wrong4:
-                                            inc B
-                                            jmp printAB
-
-                printAB:
-                        ; 輸出幾A幾B
-                        mov eax, A                     
-                        call WriteDec
-                        lea edx, msgA
-                        call WriteString
-                        
-                        mov eax, B
-                        call WriteDec
-                        lea edx, msgB
-                        call WriteString
-                        call Crlf
-
-                        ; 判斷輸贏
-                        cmp A, 4
-                        je Win
-                        cmp tryCase, 0
-                        je Fail
-                        jmp ContinueInput
-
-        InvalidInput:
-            lea edx, msgInvalid
-            call WriteString
+        showAnswer:
+            mov eax, [esi]
+            call WriteDec
+            add esi, 4
+            loop showAnswer
             call Crlf
-            jmp userInput           ; 重新輸入
-        Win:
-            lea edx, msgWin
-            call WriteString
-            call Crlf
-            jmp quit
 
-        Fail:
-            lea edx, msgFail
-            call WriteString
-            call Crlf
-    
-        quit:
+        mov eax, 2
 
-        ret
-            
-userInput ENDP
-
-
-        
-
-
-;---------------------------
-main PROC
-; 主函數
-;---------------------------
-
-        call GenerateUniqueRandom       ; 調用隨機生成函數
-        
-
-
-                            ; 打印生成的數字
-                            mov edx, OFFSET msgAnswer
-                            call WriteString
-
-                            lea esi, randNums       ; ESI 指向 randNums
-                            mov ecx, 4              ; 打印 4 個數字
-                        printNumbers:
-                            mov eax, [esi]  ; 讀取陣列中的數字到eax
-                            add esi, 4                 ; 移動到下一個數字
-                            call WriteDec           ; 打印該數字
-                            loop printNumbers
-
-                            ; 換行
-                            mov edx, OFFSET newline
-                            call WriteString
-
-        call userInput                  ; 調用使用者輸入函數
+    quit:
 
     ret
-main ENDP
+userInput ENDP
 
 END main
