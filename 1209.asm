@@ -1,5 +1,7 @@
-問題一: 隨機數第一位和第四位重複 creatNUM函數
-問題二: 比較答案不正確 CompareNumbers函數
+; 問題一: 隨機數永遠都是0123
+; NUM儲存隨機數陣列randNums亂序的前四位數，但偵錯時NUM和randNums的值都沒有變(?)[+0][+4][+8][+12]好像都是0,4,8,12(不確定是哪裡做錯)
+; 或是他們的值有變，但最後輸出還是0123
+; 問題二: 做到compare的時候，在outer的mov eax, DWORD PTR NUM[esi]會存取違規，但我不知道為什麼NUM的值不能進去EAX
 INCLUDE Irvine32.inc
 
 .data
@@ -38,25 +40,9 @@ main PROC
         mov tryCase, 8         ; 初始化最大嘗試次數
         call Randomize
         call creatNUM
-        mov randNums, eax
-        
-
-
-        lea esi, randNums
-        mov ecx, 4
-
-        showAnswer:
-            mov eax, [esi]
-            call WriteDec
-            add esi, 4
-            loop showAnswer
-            call Crlf
-
-
-
 
         call userInput
-        mov userInputResult, eax 
+        
         
         jmp continueGame          ; 僅在適當情況下跳轉
         
@@ -88,35 +74,44 @@ creatNUM PROC
     LOCAL var1 : DWORD
     LOCAL var2 : DWORD
 
+    mov ecx, 100 
+
+create:
+    call Randomize
+    call Random32
+    mov edx, 0
+    mov ebx, 10
+    div ebx
+    mov var1, edx
+
+    call RandomRange
+    mov edx, 0
+    mov ebx, 10
+    div ebx
+    mov var2, edx
+
     
-    mov ecx, 120
-
-    create:
-        call Randomize
-        call Random32
-        mov edx, 0           ; 餘數在edx
-        mov ebx, 10
-        div ebx              ; ebx=10 用於rand%10
-        mov var1, edx
-        
-        
-        call RandomRange
-        mov edx, 0           ; 餘數在edx
-        mov ebx, 10
-        div ebx              ; ebx=10 用於rand%10
-        mov var2, edx
-    cmp esi, edi
-    je create  ; 若相等，重新生成亂數
-
     mov esi, var1
-    mov edi, var2 
-    swap:
-        mov eax, DWORD PTR randNums[esi*4]
-        mov ebx, DWORD PTR randNums[edi*4]
-        mov randNums[esi*4], ebx
-        mov randNums[edi*4], eax
-        loop create
+    mov edi, var2
+
     
+    cmp esi, edi
+    je create
+
+
+swap:
+    push eax
+    push ebx
+    mov eax, DWORD PTR randNums[esi*4]
+    mov ebx, DWORD PTR randNums[edi*4]
+    mov DWORD PTR randNums[esi*4], ebx
+    mov DWORD PTR randNums[edi*4], eax
+    pop ebx
+    pop eax
+
+    loop create
+
+
     mov ecx, 4
     mov esi, 0
     get:
@@ -134,62 +129,7 @@ creatNUM PROC
             loop showAnswer
             call Crlf
     ret
- creatNUM ENDP     
-
-
-
-;---------------------------
-窩不知搗
-section .data
-    randNums DWORD 0, 1, 2, 3, 4, 5, 6, 7, 8, 9
-    NUM DWORD 4 DUP (?)
-
-section .text
-    ; 初始化迴圈計數
-    mov ecx, 100  ; 執行 100 次交換
-
-create:
-    ; 產生亂數 var1 和 var2
-    call Randomize
-    call Random32
-    mov edx, 0
-    mov ebx, 10
-    div ebx
-    mov var1, edx
-
-    call RandomRange
-    mov edx, 0
-    mov ebx, 10
-    div ebx
-    mov var2, edx
-
-    ; 設定 esi 和 edi 為索引值
-    mov esi, var1
-    mov edi, var2
-
-    ; 避免 esi 和 edi 指向相同位置
-    cmp esi, edi
-    je create
-
-    ; 確保範圍合法
-    cmp esi, 10
-    jge create
-    cmp edi, 10
-    jge create
-
-swap:
-    ; 交換 randNums[esi*4] 和 randNums[edi*4]
-    push eax
-    push ebx
-    mov eax, DWORD PTR randNums[esi*4]
-    mov ebx, DWORD PTR randNums[edi*4]
-    mov DWORD PTR randNums[esi*4], ebx
-    mov DWORD PTR randNums[edi*4], eax
-    pop ebx
-    pop eax
-
-    ; 繼續迴圈
-    loop create
+ creatNUM ENDP       
 
 
 ;---------------------------
@@ -221,7 +161,6 @@ SplitInput ENDP
 CompareNumbers PROC
 ; 比較玩家輸入與生成的數字
 ;---------------------------
-    LOCAL i : DWORD
 
     mov A, 0
     mov B, 0
@@ -232,35 +171,30 @@ CompareNumbers PROC
 
 compareOuter:
     
-    mov eax, randNums[esi]
+    mov eax, DWORD PTR NUM[esi]
     push ecx
 
     compareInner:
         mov ecx, 4
         cmp eax, seperateInput[edi]
         je incrementA
-        incB:
+        jmp quit
+
+    incrementB:
         inc B
-        add edi, 4
-        loop compareInner
+        pop ecx
+        jmp quit
 
     incrementA:
         cmp esi, edi
-        jne incB
+        jne incrementB
         inc A
         pop ecx
         jmp quit
 
-    skipMatch:
-        dec i
-        cmp i, 0
-        jne compareInner        ; b還沒比完
-              ; b比完了
-
     quit:
         add esi, 4
         loop compareOuter 
-        
 
     ret
 CompareNumbers ENDP
@@ -268,9 +202,6 @@ CompareNumbers ENDP
 ;---------------------------
 userInput PROC
 ; 處理玩家輸入
-; EAX = 0 -> WIN
-; EAX = 1 -> CONTINUE
-; EAX = 2 -> FAIL
 ;---------------------------
 
 
@@ -312,7 +243,6 @@ input00:
     dec tryCase
     cmp tryCase, 0
     je gameFail
-    mov eax, 1
     jmp input00
 
     wrong:
@@ -325,7 +255,6 @@ input00:
         lea edx, msgWin
         call WriteString
         call Crlf
-        mov eax, 0
         jmp quit
 
     gameFail:
@@ -345,8 +274,6 @@ input00:
             add esi, 4
             loop showAnswer
             call Crlf
-
-        mov eax, 2
 
     quit:
 
