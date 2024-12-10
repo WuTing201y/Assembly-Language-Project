@@ -134,7 +134,62 @@ creatNUM PROC
             loop showAnswer
             call Crlf
     ret
- creatNUM ENDP       
+ creatNUM ENDP     
+
+
+
+;---------------------------
+窩不知搗
+section .data
+    randNums DWORD 0, 1, 2, 3, 4, 5, 6, 7, 8, 9
+    NUM DWORD 4 DUP (?)
+
+section .text
+    ; 初始化迴圈計數
+    mov ecx, 100  ; 執行 100 次交換
+
+create:
+    ; 產生亂數 var1 和 var2
+    call Randomize
+    call Random32
+    mov edx, 0
+    mov ebx, 10
+    div ebx
+    mov var1, edx
+
+    call RandomRange
+    mov edx, 0
+    mov ebx, 10
+    div ebx
+    mov var2, edx
+
+    ; 設定 esi 和 edi 為索引值
+    mov esi, var1
+    mov edi, var2
+
+    ; 避免 esi 和 edi 指向相同位置
+    cmp esi, edi
+    je create
+
+    ; 確保範圍合法
+    cmp esi, 10
+    jge create
+    cmp edi, 10
+    jge create
+
+swap:
+    ; 交換 randNums[esi*4] 和 randNums[edi*4]
+    push eax
+    push ebx
+    mov eax, DWORD PTR randNums[esi*4]
+    mov ebx, DWORD PTR randNums[edi*4]
+    mov DWORD PTR randNums[esi*4], ebx
+    mov DWORD PTR randNums[edi*4], eax
+    pop ebx
+    pop eax
+
+    ; 繼續迴圈
+    loop create
 
 
 ;---------------------------
