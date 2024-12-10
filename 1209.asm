@@ -1,10 +1,10 @@
 問題一: 隨機數第一位和第四位重複 creatNUM函數
 問題二: 比較答案不正確 CompareNumbers函數
-
 INCLUDE Irvine32.inc
 
 .data
-randNums DWORD 4 DUP(0)      ; 隨機生成的四個數字
+randNums DWORD 0, 1, 2, 3, 4, 5, 6, 7, 8, 9
+NUM DWORD 4 DUP (?)
 input DWORD ?                ; 玩家輸入
 seperateInput DWORD 4 DUP(0) ; 玩家輸入的分解數字
 A DWORD 0                    ; 正確數字和位置
@@ -82,13 +82,14 @@ main ENDP
 ;---------------------------
 creatNUM PROC
 ; Creat random number(0 ~ 9) to game, saving in EAX.
+; 兩個兩個打亂
 ;---------------------------
+
+    LOCAL var1 : DWORD
+    LOCAL var2 : DWORD
+
     
-    LOCAL i : DWORD            ; 循環計數器
-    LOCAL isDuplicate : DWORD  ; 是否有重複數字
-    
-    mov i, 0                   ; 初始化計數器
-    lea esi, OFFSET randNums
+    mov ecx, 120
 
     create:
         call Randomize
@@ -96,36 +97,42 @@ creatNUM PROC
         mov edx, 0           ; 餘數在edx
         mov ebx, 10
         div ebx              ; ebx=10 用於rand%10
-        mov eax, edx         ; 首位存入EAX[0]
-
-        ; 檢查是否重複
-        mov isDuplicate, 0
-        mov ecx, i
-        mov ebx, 0
-
-    checkDuplicate:
-        cmp ebx, ecx
-        jge storeNUM
-        mov edx, [esi + ebx * 4]
-        cmp eax, edx
-        jne nextCheck
-        mov isDuplicate, 1
-        jmp create
-    
-    nextCheck:
-        inc ebx
-        jmp checkDuplicate
-
-    storeNUM:
-        cmp isDuplicate, 1
-        je create
-        mov edx, i
-        shl edx, 2
-        mov [esi + edx], eax
-        inc i
-        cmp i, 4
-        jl create
+        mov var1, edx
         
+        
+        call RandomRange
+        mov edx, 0           ; 餘數在edx
+        mov ebx, 10
+        div ebx              ; ebx=10 用於rand%10
+        mov var2, edx
+    cmp esi, edi
+    je create  ; 若相等，重新生成亂數
+
+    mov esi, var1
+    mov edi, var2 
+    swap:
+        mov eax, DWORD PTR randNums[esi*4]
+        mov ebx, DWORD PTR randNums[edi*4]
+        mov randNums[esi*4], ebx
+        mov randNums[edi*4], eax
+        loop create
+    
+    mov ecx, 4
+    mov esi, 0
+    get:
+        mov eax, DWORD PTR randNums[esi]
+        mov NUM[esi], eax
+        add esi, 4
+        loop get
+    
+    mov ecx, 4
+    mov esi, 0
+    showAnswer:
+            mov eax, DWORD PTR NUM[esi]
+            call WriteDec
+            add esi, 4
+            loop showAnswer
+            call Crlf
     ret
  creatNUM ENDP       
 
@@ -164,42 +171,41 @@ CompareNumbers PROC
     mov A, 0
     mov B, 0
 
-    mov esi, OFFSET randNums
-    mov edi, OFFSET seperateInput
+    mov esi, 0
+    mov edi, 0
     mov ecx, 4
 
 compareOuter:
-    cmp ecx, 0
-    je quit
-    sub ecx, 1
-    mov eax, [esi + ecx * 4]        ; 第四位開始比對
-    mov i, 4      ; b[i]位置
+    
+    mov eax, randNums[esi]
+    push ecx
 
     compareInner:
-        cmp i, 0
-        je skipMatch
-
-        mov ebx, i
-        dec ebx
-        shl ebx, 2
-        mov ebx, [edi + ebx]      ; b[4]~b[1]比對
-        cmp eax, ebx                    ;a[4]先與b[4]比
-        
-        jne skipMatch                   ; 不同
-        cmp ecx, i                      ; 
+        mov ecx, 4
+        cmp eax, seperateInput[edi]
         je incrementA
+        incB:
         inc B
-        jmp skipMatch
+        add edi, 4
+        loop compareInner
 
-incrementA:
-    inc A
+    incrementA:
+        cmp esi, edi
+        jne incB
+        inc A
+        pop ecx
+        jmp quit
 
     skipMatch:
         dec i
         cmp i, 0
         jne compareInner        ; b還沒比完
-        loop compareOuter       ; b比完了
+              ; b比完了
+
     quit:
+        add esi, 4
+        loop compareOuter 
+        
 
     ret
 CompareNumbers ENDP
