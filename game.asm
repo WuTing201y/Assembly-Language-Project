@@ -15,20 +15,23 @@ INCLUDE Irvine32.inc
     tryCase DWORD 8
 
     ; message
-    msgA BYTE "A", 0dh, 0ah, 0
-    msgB BYTE "B", 0dh, 0ah, 0
+    msgA BYTE "A", 0
+    msgB BYTE "B", 0
     msgWin BYTE "Congratulations, game successful!", 0dh, 0ah, 0
     msgFail BYTE "Game failed!", 0dh, 0ah, 0
     msgEndGame BYTE "Thanks for playing!", 0dh, 0ah, 0
     msgContinue BYTE "Enter 1 to continue the game, enter 0 to exit the game:", 0dh, 0ah, 0
-    msgInput BYTE "Please input your guess of the four digits:", 0
+    msgInput BYTE "Please input your guess of the four digits: ", 0dh, 0ah, 0
     msgInvalid BYTE "Invalid input! Please try again.", 0dh, 0ah, 0
+    msgAnswer BYTE "The correct answer is: ", 0
 
 .code
 main PROC
 
 new:
-    mov tryCase, 8
+    lea edx, msgInput           ;歡迎訊息
+    call WriteString
+    mov tryCase, 3
     mov A, 0
     mov B, 0
     call creatNUM
@@ -55,6 +58,18 @@ try:
     fail:
         lea edx, msgFail
         call WriteString
+        lea edx, msgAnswer
+        call WriteString
+        mov eax, n1
+        call WriteDec
+        mov eax, n2
+        call WriteDec
+        mov eax, n3
+        call WriteDec
+        mov eax, n4
+        call WriteDec
+        call Crlf
+        call Crlf
         jmp continue
 
     continue:
@@ -179,6 +194,8 @@ compareN4 PROC
 
 incA:
     inc A
+    cmp A, 4
+    je quit
     jmp print
 
 incB:
@@ -194,6 +211,7 @@ print:
     call WriteDec
     lea edx, msgB
     call WriteString
+    call Crlf
     call Crlf
 
     
@@ -241,29 +259,18 @@ createN2:
             cmp n3, eax
             je createN4
 
-    ; 列印檢查
-   mov ecx, 4
-   mov esi, 0
-print_loop:
-    mov eax, n1
-    call WriteDec
-    mov eax, n2
-    call WriteDec
-    mov eax, n3
-    call WriteDec
-    mov eax, n4
-    call WriteDec
-    call Crlf
     ret
  creatNUM ENDP
 
 ;---------------------------
 userInput PROC
 ;---------------------------
+L1:
     call ReadInt
-    mov input, eax
-    call WriteDec
-    call Crlf
+    cmp eax, 9999
+    ja invalid
+    cmp eax, 0000
+    jb invalid
 
     mov edx, 0
     mov ebx, 10 ; %10
@@ -284,8 +291,15 @@ userInput PROC
     mov ebx, 10 ; %10
     div ebx     ; 商:EAX 餘:EDX
     mov get1, edx
-    
-    ret
+    jmp quit
+
+  invalid:
+        lea edx, msgInvalid
+        call WriteString
+        call Crlf
+        jmp L1
+    quit:
+        ret
 userInput ENDP
  END main
 ;---------------------------
