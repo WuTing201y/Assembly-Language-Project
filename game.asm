@@ -31,7 +31,7 @@ main PROC
 new:
     lea edx, msgInput           ;歡迎訊息
     call WriteString
-    mov tryCase, 3
+    mov tryCase, 8
     mov A, 0
     mov B, 0
     call creatNUM
