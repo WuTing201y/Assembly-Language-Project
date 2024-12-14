@@ -1,15 +1,15 @@
 INCLUDE Irvine32.inc
 
 .data
-    
+
+    ; data
     randNum DWORD 4 DUP(0)
     getNum DWORD 4 DUP(0)
     A DWORD 0
     B DWORD 0
     tryCase DWORD 8
 
-    ; bar
-        
+    ; bar message 
     	total DWORD 8
     	msgLine BYTE "=====", 0
     	msgBlank BYTE "     ", 0
@@ -45,20 +45,19 @@ INCLUDE Irvine32.inc
 
 .code
 main PROC
-
-    call menu
+    call menu		; 呼叫目錄 void menu()
 start:
-    call ReadInt
-    cmp eax, 1
+    call ReadInt	; 讀取目錄
+    cmp eax, 1		; case 1: { game(randNum); break; } // 開始遊戲
     je game
-    cmp eax, 2
+    cmp eax, 2		; case 2: { help(); break; } // 幫助
     je help
-    cmp eax, 3
+    cmp eax, 3		; case 3: { break;} //退出遊戲
     je quit
-    jmp start_invalid
+    jmp start_invalid	; default
 
     start_invalid:
-        lea edx, msgStartInvalid
+        lea edx, msgStartInvalid	; printf("Invalid input! Please enter (1-3): ");
         call WriteString
         jmp start
 
@@ -69,6 +68,7 @@ main ENDP
 
 ;---------------------------
 menu PROC
+; void menu() // 函數聲明
 ;---------------------------
     lea edx, welcome
     call WriteString
@@ -77,6 +77,7 @@ menu ENDP
 
 ;---------------------------
 help PROC
+; void help() // 遊戲規說明函數
 ;---------------------------
     call Crlf
     lea edx, msgHelp
@@ -84,7 +85,7 @@ help PROC
 L1:
     call ReadInt
     cmp eax, 1
-    je quit
+    je quit		; Press 1 to continue the game:
     jmp invalid
 
     invalid:
@@ -105,8 +106,8 @@ new:
     call WriteString
     mov tryCase, 8
     mov A, 0
-    mov B, 0
-    call creatNUM
+    mov B, 0 
+    call creatNUM		; 生成隨機數 creatNUM(randNum)
 try:
     dec tryCase
     mov A, 0
@@ -124,19 +125,19 @@ try:
     je fail
     jmp try
 
-    win:
+    win:			; if (A == 4)  printf("Congratulations, game successful!\n");
         lea edx , msgWin
         call WriteString
         jmp continue
-    fail:
-        lea edx, msgFail
+    fail:			; if (A != 4 && tryCase > 8)
+        lea edx, msgFail	; printf("Game failed!\n");
         call WriteString
-        lea edx, msgAnswer
+        lea edx, msgAnswer	; printf("The correct answer is: ");
         call WriteString
         
         mov ecx, 4
         mov esi, 0
-        L1:
+        L1:				; print answer
         mov eax, [randNum + esi * 4]
         call WriteDec
         inc esi
@@ -146,16 +147,16 @@ try:
         call Crlf
         jmp continue
 
-    continue:
-        lea edx, msgContinue
+    continue:				; 詢問是否繼續
+        lea edx, msgContinue		; printf("Enter 1 to continue the game, enter 0 to exit the game: ");
         call WriteString
     inputAgain:
         call ReadInt
         cmp eax, 1
-        je new
+        je new				; 繼續遊戲 if (pick == 1) game(randNum);
         cmp eax, 0
-        je endGame
-        jmp invalid
+        je endGame			; 結束遊戲 if (pick == 0) printf("Thanks for playing!\n");
+        jmp invalid			; 輸入錯誤 printf("Invalid input! Please enter (1-3): ");
 
     invalid:
         call Crlf
@@ -173,7 +174,7 @@ Game ENDP
 ;---------------------------
 creatNUM PROC
 ;---------------------------
-    call Randomize	
+    call Randomize	; srand((unsigned)time(NULL))
     mov esi, 0
     mov ecx, 4		; 生成4個數字
 N1:
@@ -222,6 +223,7 @@ quit:
  creatNUM ENDP
 ;---------------------------
 compareN1 PROC
+; 比較對應位置上的數字
 ; n0和g0比
 ;---------------------------
     
@@ -344,7 +346,7 @@ incA:
 incB:
     inc B
 
-print:
+print:			; printf("%dA%dB\n", A, B);
     mov eax, A
     call WriteDec
     lea edx, msgA
@@ -360,14 +362,12 @@ print:
 quit: 
     ret
 compareN4 ENDP
-
-
 ;---------------------------
 userInput PROC
 ;---------------------------
   L1:
     call ReadInt
-    cmp eax, 9999
+    cmp eax, 9999		; while (pick < 1000 || pick > 9999)
     ja invalid
     cmp eax, 1000
     jb invalid
@@ -378,14 +378,14 @@ userInput PROC
 seperate:
     mov edx, 0
     mov ebx, 10 ; %10
-    div ebx     ; 商:EAX 餘:EDX
+    div ebx     ; 商:EAX 餘:EDX		; getNum[i] = pick % 10; pick = pick / 10;
     mov [getNum + esi * 4], edx
     dec esi
     loop seperate
     jmp quit
 
   invalid:
-        lea edx, msgInvalid
+        lea edx, msgInvalid	; printf("Invalid input!\n");
         call WriteString
         call Crlf
         jmp L1
@@ -396,34 +396,34 @@ userInput ENDP
 progress_bar PROC
 ;---------------------------
 	mov eax, tryCase
-    mov ebx, total
+    	mov ebx, total
 	sub ebx, eax
 
-	lea edx, msgBarBegin
+	lea edx, msgBarBegin	; 輸出開始
 	call WriteString
 
 	mov ecx, ebx
 	L1:
-		lea edx, msgLine
+		lea edx, msgLine	; 輸出填滿的部分
 		call WriteString
 		loop L1
 	
-	lea edx, msgArrow
+	lea edx, msgArrow	; 輸出箭頭
 	call WriteString
 
     cmp eax, 0
     je L3
-	mov ecx, eax        ;tryCase->blank    
+	mov ecx, eax        ; tryCase -> blank  輸出多少空白鍵  
 	L2:
-		lea edx, msgBlank
+		lea edx, msgBlank	
 		call WriteString
 		loop L2
 	
     L3:
-	lea edx, msgBarEnd
+	lea edx, msgBarEnd	; 輸出結尾
 	call WriteString
 
-	mov eax, tryCase
+	mov eax, tryCase	; 輸出剩餘機會
 	call WriteDec
 
 	lea edx, msgRemain
@@ -434,4 +434,3 @@ progress_bar PROC
 progress_bar ENDP
 
 END main
-;---------------------------
