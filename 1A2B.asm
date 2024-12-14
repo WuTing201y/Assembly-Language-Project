@@ -8,6 +8,16 @@ INCLUDE Irvine32.inc
     B DWORD 0
     tryCase DWORD 8
 
+    ; bar
+        
+    	total DWORD 8
+    	msgLine BYTE "=====", 0
+    	msgBlank BYTE "     ", 0
+    	msgBarBegin BYTE "[", 0
+    	msgBarEnd BYTE "] ", 0
+    	msgArrow BYTE ">", 0
+    	msgRemain BYTE " chances left", 0dh, 0ah, 0
+
     ; message
     welcome BYTE "Guess Number Game", 0dh, 0ah
             BYTE "1. Start Game", 0dh, 0ah
@@ -86,6 +96,7 @@ quit:
     call game
     ret
 help ENDP
+
 ;---------------------------
 game PROC
 ;---------------------------
@@ -105,6 +116,7 @@ try:
     call compareN2
     call compareN3
     call compareN4
+    call progress_bar
 
     cmp A, 4
     je win
@@ -202,21 +214,21 @@ quit:
  creatNUM ENDP
 ;---------------------------
 compareN1 PROC
-; n1和get1比
+; n0和g0比
 ;---------------------------
     
     mov esi, 0
     mov eax, [randNum + esi * 4]
 
-    cmp eax, [getNum + esi * 4]
+    cmp eax, [getNum + esi * 4]     ; n0, g0
     je incA
-    inc esi
+    inc esi                         ; esi = 1
+    cmp eax, [getNum + esi * 4]     ; n0, g1
+    je incB
+    inc esi                         ; esi = 2
     cmp eax, [getNum + esi * 4]
     je incB
-    inc esi
-    cmp eax, [getNum + esi * 4]
-    je incB
-    inc esi
+    inc esi                         ; esi = 3
     cmp eax, [getNum + esi * 4]
     je incB
     jmp quit
@@ -234,21 +246,21 @@ compareN1 ENDP
 
 ;---------------------------
 compareN2 PROC
-; n2, get2
+; n1, g1
 ;---------------------------
     
-    mov esi, 1
-    mov eax, [randNum + esi * 4]
+    mov esi, 1                              ; esi = 1
+    mov eax, [randNum + esi * 4]            ; n1
 
-    cmp eax, [getNum + esi * 4]
+    cmp eax, [getNum + esi * 4]             ; n1, g1
     je incA
-    dec esi
-    cmp eax, [getNum + esi * 4]
+    dec esi                                 ; esi = 0
+    cmp eax, [getNum + esi * 4]             ; n1, g0
     je incB
-    mov esi, 3
-    cmp eax, [getNum + esi * 4]
+    mov esi, 2                              ; esi = 2
+    cmp eax, [getNum + esi * 4]             ; n1, g2
     je incB
-    inc esi
+    inc esi                                 ; esi = 3
     cmp eax, [getNum + esi * 4]
     je incB
     jmp quit
@@ -266,14 +278,14 @@ compareN2 ENDP
 
 ;---------------------------
 compareN3 PROC
-; n3, get3
+; n2, g2
 ;---------------------------
-    mov esi, 2
-    mov eax, [randNum + esi * 4]
+    mov esi, 2                                 ; esi = 2
+    mov eax, [randNum + esi * 4]               ; n2
 
-    cmp eax, [getNum + esi * 4]         ;
+    cmp eax, [getNum + esi * 4]                ; n2, g2
     je incA
-    mov esi, 0
+    mov esi, 0                                 ; esi = 0
     cmp eax, [getNum + esi * 4]
     je incB
     inc esi
@@ -297,21 +309,20 @@ compareN3 ENDP
 
 ;---------------------------
 compareN4 PROC
-; n1和get1比
-; 不對，n1和n2比
+; n3, g3
 ;---------------------------
-mov esi, 3
+    mov esi, 3                              ; esi = 3
     mov eax, [randNum + esi * 4]
 
-    cmp eax, [getNum + esi * 4]         ;
+    cmp eax, [getNum + esi * 4]             ; n3, g3
     je incA
-    mov esi, 0
+    mov esi, 0                              ; esi = 0
     cmp eax, [getNum + esi * 4]
     je incB
-    inc esi
+    inc esi                                 ; esi = 1
     cmp eax, [getNum + esi * 4]
     je incB
-    inc esi
+    inc esi                                 ; esi = 2
     cmp eax, [getNum + esi * 4]
     je incB
     jmp print
@@ -336,7 +347,7 @@ print:
     lea edx, msgB
     call WriteString
     call Crlf
-    call Crlf
+    
 
 quit: 
     ret
@@ -373,6 +384,46 @@ seperate:
     quit:
         ret
 userInput ENDP
+;---------------------------
+progress_bar PROC
+;---------------------------
+	mov eax, tryCase
+    mov ebx, total
+	sub ebx, eax
 
- END main
+	lea edx, msgBarBegin
+	call WriteString
+
+	mov ecx, ebx
+	L1:
+		lea edx, msgLine
+		call WriteString
+		loop L1
+	
+	lea edx, msgArrow
+	call WriteString
+
+    cmp eax, 0
+    je L3
+	mov ecx, eax        ;tryCase->blank    
+	L2:
+		lea edx, msgBlank
+		call WriteString
+		loop L2
+	
+    L3:
+	lea edx, msgBarEnd
+	call WriteString
+
+	mov eax, tryCase
+	call WriteDec
+
+	lea edx, msgRemain
+	call WriteString
+    call Crlf
+
+	ret
+progress_bar ENDP
+
+END main
 ;---------------------------
