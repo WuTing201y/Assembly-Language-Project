@@ -203,7 +203,7 @@ createN:
             je quit		; 若ecx = 1，代表4位數生成完畢，結束生成
             dec ecx		; 否則ecx - 1
             inc esi		; esi + 1
-            jmp createN		繼續生成下一個數字
+            jmp createN		; 繼續生成下一個數字
         
         same:
             pop ecx		; 彈出createN的ecx
