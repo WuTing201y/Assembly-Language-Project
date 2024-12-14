@@ -38,7 +38,7 @@ INCLUDE Irvine32.inc
     msgWin BYTE "Congratulations, game successful!", 0dh, 0ah, 0
     msgFail BYTE "Game failed!", 0dh, 0ah, 0
     msgEndGame BYTE "Thanks for playing!", 0dh, 0ah, 0
-    msgContinue BYTE "Enter 1 to continue the game, enter 0 to exit the game:", 0dh, 0ah, 0
+    msgContinue BYTE "Enter 1 to continue the game, enter 0 to exit the game: ", 0dh, 0ah, 0
     msgInput BYTE "Please input your guess of the four digits: ", 0dh, 0ah, 0
     msgInvalid BYTE "Invalid input! Please try again.", 0dh, 0ah, 0
     msgAnswer BYTE "The correct answer is: ", 0
