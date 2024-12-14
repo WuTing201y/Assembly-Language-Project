@@ -24,7 +24,7 @@ int main()
         case 1: { game(randNum); break; } // 開始遊戲
         case 2: { help(); break; } // 幫助
         case 3: { break;} //退出遊戲
-        default: printf("Invalid input! Please enter (1-3): "); break; // 輸入1.2.以外的數
+        default: printf("Invalid input! Please enter (1-3): "); break; // 輸入1.2.3.以外的數
         }
         if (select != 3){
             scanf("%d", &select);
