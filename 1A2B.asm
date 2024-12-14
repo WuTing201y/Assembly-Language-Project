@@ -17,8 +17,8 @@ INCLUDE Irvine32.inc
         
     msgHelp BYTE "Welcome to the program", 0dh, 0ah
             BYTE "Game Instructions: Enter a four-digit number...", 0dh, 0ah
-            BYTE "X indicates how many digits are correct and in the correct position.", 0dh, 0ah
-            BYTE "Y indicates how many digits are correct but in the wrong position.", 0dh, 0ah
+            BYTE "A indicates how many digits are correct and in the correct position.", 0dh, 0ah
+            BYTE "B indicates how many digits are correct but in the wrong position.", 0dh, 0ah
             BYTE "Press 1 to continue the game: ", 0
 
     msgStartInvalid BYTE "Invalid input! Please enter (1-3): ", 0
@@ -137,10 +137,19 @@ try:
     continue:
         lea edx, msgContinue
         call WriteString
+    inputAgain:
         call ReadInt
         cmp eax, 1
         je new
-        jmp endGame
+        cmp eax, 0
+        je endGame
+        jmp invalid
+
+    invalid:
+        call Crlf
+        lea edx, msgInvalid
+        call WriteString
+        jmp inputAgain
 
     endGame:
         lea edx, msgEndGame
