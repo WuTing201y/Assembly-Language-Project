@@ -128,6 +128,15 @@ void game(int a[])
             printf("輸入錯誤，請重新輸入！\n");
     }
 }
+int same(int num[])
+{
+    u = 0;
+    for (int i = 0; i < 3; i++)
+        for (int j = i + 1; j < 4; j++)
+            if (num[i] == num[j])
+                u = 1;
+    return u;
+}
 // 顯示進度條函數
 void progress_bar(int current, int total)
 {
