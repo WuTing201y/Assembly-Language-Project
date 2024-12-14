@@ -1,20 +1,38 @@
 INCLUDE Irvine32.inc
 
 .data
-    n1 DWORD 0
-    n2 DWORD 0
-    n3 DWORD 0
-    n4 DWORD 0
-    input DWORD ?
-    get1 DWORD 0
-    get2 DWORD 0
-    get3 DWORD 0
-    get4 DWORD 0
+    
+    randNum DWORD 4 DUP(0)
+    getNum DWORD 4 DUP(0)
     A DWORD 0
     B DWORD 0
     tryCase DWORD 8
 
+    ; bar
+        tryCase DWORD 6
+    	totalTry DWORD 8
+    	msgLine BYTE "=====", 0
+    	msgBlank BYTE "     ", 0
+    	msgBarBegin BYTE "[", 0
+    	msgBarEnd BYTE "] ", 0
+    	msgArrow BYTE ">", 0
+    	msgRemain BYTE " chances left", 0dh, 0ah, 0
+
     ; message
+    welcome BYTE "Guess Number Game", 0dh, 0ah
+            BYTE "1. Start Game", 0dh, 0ah
+            BYTE "2. Help", 0dh, 0ah
+            BYTE "3. Exit", 0dh, 0ah
+            BYTE "Please enter (1-3): ", 0
+        
+    msgHelp BYTE "Welcome to the program", 0dh, 0ah
+            BYTE "Game Instructions: Enter a four-digit number...", 0dh, 0ah
+            BYTE "A indicates how many digits are correct and in the correct position.", 0dh, 0ah
+            BYTE "B indicates how many digits are correct but in the wrong position.", 0dh, 0ah
+            BYTE "Press 1 to continue the game: ", 0
+
+    msgStartInvalid BYTE "Invalid input! Please enter (1-3): ", 0
+    msgHelpInvalid BYTE "Invalid input! Please enter 1 to continue the game: ", 0
     msgA BYTE "A", 0
     msgB BYTE "B", 0
     msgWin BYTE "Congratulations, game successful!", 0dh, 0ah, 0
@@ -28,6 +46,94 @@ INCLUDE Irvine32.inc
 .code
 main PROC
 
+    call menu
+start:
+    call ReadInt
+    cmp eax, 1
+    je game
+    cmp eax, 2
+    je help
+    cmp eax, 3
+    je quit
+    jmp start_invalid
+
+    start_invalid:
+        lea edx, msgStartInvalid
+        call WriteString
+        jmp start
+
+    quit:
+        ret
+    INVOKE ExitProcess, 0
+main ENDP
+
+;---------------------------
+menu PROC
+;---------------------------
+    lea edx, welcome
+    call WriteString
+    ret
+menu ENDP
+
+;---------------------------
+help PROC
+;---------------------------
+    call Crlf
+    lea edx, msgHelp
+    call WriteString
+L1:
+    call ReadInt
+    cmp eax, 1
+    je quit
+    jmp invalid
+
+    invalid:
+        call Crlf
+        lea edx, msgHelpInvalid
+        call WriteString
+        jmp L1
+quit:
+    call game
+    ret
+help ENDP
+;---------------------------
+progress_bar PROC
+;---------------------------
+	mov eax, tryCase
+	sub totalTry, eax
+
+	lea edx, msgBarBegin
+	call WriteString
+
+	mov ecx, totalTry
+	L1:
+		lea edx, msgLine
+		call WriteString
+		loop L1
+	
+	lea edx, msgArrow
+	call WriteString
+
+	mov ecx, eax
+	L2:
+		lea edx, msgBlank
+		call WriteString
+		loop L2
+	
+	lea edx, msgBarEnd
+	call WriteString
+
+	mov eax, tryCase
+	call WriteDec
+
+	lea edx, msgRemain
+	call WriteString
+
+	ret
+progress_bar ENDP
+;---------------------------
+game PROC
+;---------------------------
 new:
     lea edx, msgInput           ;歡迎訊息
     call WriteString
@@ -44,6 +150,7 @@ try:
     call compareN2
     call compareN3
     call compareN4
+    call progress_bar
 
     cmp A, 4
     je win
@@ -60,14 +167,15 @@ try:
         call WriteString
         lea edx, msgAnswer
         call WriteString
-        mov eax, n1
+        
+        mov ecx, 4
+        mov esi, 0
+        L1:
+        mov eax, [randNum + esi * 4]
         call WriteDec
-        mov eax, n2
-        call WriteDec
-        mov eax, n3
-        call WriteDec
-        mov eax, n4
-        call WriteDec
+        inc esi
+        loop L1
+        
         call Crlf
         call Crlf
         jmp continue
@@ -75,33 +183,87 @@ try:
     continue:
         lea edx, msgContinue
         call WriteString
+    inputAgain:
         call ReadInt
         cmp eax, 1
         je new
-        jmp endGame
+        cmp eax, 0
+        je endGame
+        jmp invalid
+
+    invalid:
+        call Crlf
+        lea edx, msgInvalid
+        call WriteString
+        jmp inputAgain
 
     endGame:
         lea edx, msgEndGame
         call WriteString
+        
+quit:
+    ret
+Game ENDP
+;---------------------------
+creatNUM PROC
+;---------------------------
+    call Randomize
+    mov esi, 0
+    mov ecx, 4
 
+createN:
+    mov eax, 10
+    call RandomRange
+    mov [randNum + esi * 4], eax
 
- main ENDP
+    cmp esi, 0
+    jne L1
+    inc esi
+    loop createN
 
+    L1:
+        push ecx
+        mov ecx, esi        ; 迴圈次數
+        mov edi, esi        ; 前面元素
+        L3:
+            dec edi
+            mov ebx, [randNum + edi * 4]
+            cmp eax, ebx
+            je same
+            loop L3
+
+            pop ecx
+            cmp ecx, 1
+            je quit
+            dec ecx
+            inc esi
+            jmp createN
+        
+        same:
+            pop ecx
+            jmp createN
+
+quit:
+    ret
+ creatNUM ENDP
 ;---------------------------
 compareN1 PROC
 ; n1和get1比
-; 不對，n1和n2比
 ;---------------------------
     
+    mov esi, 0
+    mov eax, [randNum + esi * 4]
 
-    mov eax, n1
-    cmp eax, get1
+    cmp eax, [getNum + esi * 4]
     je incA
-    cmp eax, get2
+    inc esi
+    cmp eax, [getNum + esi * 4]
     je incB
-    cmp eax, get3
+    inc esi
+    cmp eax, [getNum + esi * 4]
     je incB
-    cmp eax, get4
+    inc esi
+    cmp eax, [getNum + esi * 4]
     je incB
     jmp quit
 
@@ -118,19 +280,22 @@ compareN1 ENDP
 
 ;---------------------------
 compareN2 PROC
-; n1和get1比
-; 不對，n1和n2比
+; n2, get2
 ;---------------------------
     
+    mov esi, 1
+    mov eax, [randNum + esi * 4]
 
-    mov eax, n2
-    cmp eax, get2
+    cmp eax, [getNum + esi * 4]
     je incA
-    cmp eax, get1
+    dec esi
+    cmp eax, [getNum + esi * 4]
     je incB
-    cmp eax, get3
+    mov esi, 3
+    cmp eax, [getNum + esi * 4]
     je incB
-    cmp eax, get4
+    inc esi
+    cmp eax, [getNum + esi * 4]
     je incB
     jmp quit
 
@@ -147,19 +312,21 @@ compareN2 ENDP
 
 ;---------------------------
 compareN3 PROC
-; n1和get1比
-; 不對，n1和n2比
+; n3, get3
 ;---------------------------
-    
+    mov esi, 2
+    mov eax, [randNum + esi * 4]
 
-    mov eax, n3
-    cmp eax, get3
+    cmp eax, [getNum + esi * 4]         ;
     je incA
-    cmp eax, get1
+    mov esi, 0
+    cmp eax, [getNum + esi * 4]
     je incB
-    cmp eax, get2
+    inc esi
+    cmp eax, [getNum + esi * 4]
     je incB
-    cmp eax, get4
+    mov esi, 3
+    cmp eax, [getNum + esi * 4]
     je incB
     jmp quit
 
@@ -179,16 +346,19 @@ compareN4 PROC
 ; n1和get1比
 ; 不對，n1和n2比
 ;---------------------------
-    
+mov esi, 3
+    mov eax, [randNum + esi * 4]
 
-    mov eax, n4
-    cmp eax, get4
+    cmp eax, [getNum + esi * 4]         ;
     je incA
-    cmp eax, get1
+    mov esi, 0
+    cmp eax, [getNum + esi * 4]
     je incB
-    cmp eax, get2
+    inc esi
+    cmp eax, [getNum + esi * 4]
     je incB
-    cmp eax, get3
+    inc esi
+    cmp eax, [getNum + esi * 4]
     je incB
     jmp print
 
@@ -214,83 +384,31 @@ print:
     call Crlf
     call Crlf
 
-    
-
 quit: 
     ret
 compareN4 ENDP
-;---------------------------
-creatNUM PROC
-;---------------------------
- call Randomize
 
-createN1:
-    mov eax, 10
-    call RandomRange
-    mov n1, eax
-
-createN2:
-    mov eax, 10
-    call RandomRange
-    mov n2, eax
-
-    cmp n1, eax   ; EAX = n2
-    je createN2
-    
-    createN3:
-        mov eax, 10
-        call RandomRange
-        mov n3, eax
-
-        cmp n1, eax
-        je createN3
-        cmp n2, eax
-        je createN3
-
-        createN4:
-            mov eax, 10
-            call RandomRange
-            mov n4, eax
-
-            cmp n1, eax
-            je createN4
-            cmp n2, eax
-            je createN4
-            cmp n3, eax
-            je createN4
-
-    ret
- creatNUM ENDP
 
 ;---------------------------
 userInput PROC
 ;---------------------------
-L1:
+  L1:
     call ReadInt
     cmp eax, 9999
     ja invalid
     cmp eax, 0000
     jb invalid
 
-    mov edx, 0
-    mov ebx, 10 ; %10
-    div ebx     ; 商:EAX 餘:EDX
-    mov get4, edx
+    mov esi, 3
+    mov ecx, 4
 
+seperate:
     mov edx, 0
     mov ebx, 10 ; %10
     div ebx     ; 商:EAX 餘:EDX
-    mov get3, edx
-
-    mov edx, 0
-    mov ebx, 10 ; %10
-    div ebx     ; 商:EAX 餘:EDX
-    mov get2, edx
-
-    mov edx, 0
-    mov ebx, 10 ; %10
-    div ebx     ; 商:EAX 餘:EDX
-    mov get1, edx
+    mov [getNum + esi * 4], edx
+    dec esi
+    loop seperate
     jmp quit
 
   invalid:
@@ -301,5 +419,6 @@ L1:
     quit:
         ret
 userInput ENDP
+
  END main
 ;---------------------------
