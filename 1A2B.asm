@@ -38,7 +38,7 @@ INCLUDE Irvine32.inc
     msgWin BYTE "Congratulations, game successful!", 0dh, 0ah, 0
     msgFail BYTE "Game failed!", 0dh, 0ah, 0
     msgEndGame BYTE "Thanks for playing!", 0dh, 0ah, 0
-    msgContinue BYTE "Enter 1 to continue the game, enter 0 to exit the game: ", 0dh, 0ah, 0
+    msgContinue BYTE "Enter 1 to continue the game, enter 0 to exit the game: ", 0
     msgInput BYTE "Please input your guess of the four digits: ", 0dh, 0ah, 0
     msgInvalid BYTE "Invalid input! Please try again.", 0dh, 0ah, 0
     msgAnswer BYTE "The correct answer is: ", 0
@@ -176,12 +176,20 @@ creatNUM PROC
     call Randomize	
     mov esi, 0
     mov ecx, 4		; 生成4個數字
+N1:
+    mov eax, 10		; 範圍介於0~9之間
+    call RandomRange	; 生成隨機數
+    cmp eax, 0
+    je N1
+    mov [randNum + esi * 4], eax
+    jmp N2
 
 createN:
     mov eax, 10		; 範圍介於0~9之間
     call RandomRange	; 生成隨機數
     mov [randNum + esi * 4], eax
 
+N2:
     cmp esi, 0		
     jne L1		; 若不是生成第0項，跳至L1
     inc esi
@@ -361,7 +369,7 @@ userInput PROC
     call ReadInt
     cmp eax, 9999
     ja invalid
-    cmp eax, 0000
+    cmp eax, 1000
     jb invalid
 
     mov esi, 3
