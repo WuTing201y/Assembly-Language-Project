@@ -3,25 +3,25 @@
 #include<stdlib.h>
 #include<conio.h>
 
-int u; //¥ş§½ÅÜ¶q
-int same(int num[]);//¨ç¼ÆÁn©ú
-void menu();//¨ç¼ÆÁn©ú
-void progress_bar(int current, int total); //¶i«×±ø¨ç¼ÆÁn©ú
+int u; //å…¨å±€è®Šé‡
+int same(int num[]);//å‡½æ•¸è²æ˜
+void menu();//å‡½æ•¸è²æ˜
+void progress_bar(int current, int total); //é€²åº¦æ¢å‡½æ•¸è²æ˜
 
 void menu()
 {
-    printf("\t\t\t\t²q¼Æ¦r¹CÀ¸\n\n\n\n");
-    printf("\t\t\t\t1.¶}©l¹CÀ¸\n\n");
-    printf("\t\t\t\t2.À°§U\n\n");
-    printf("\t\t\t\t3.°h¥X\n\n");
-    printf("\t\t\t½Ğ¿é¤J¡]1-3¡^¡G");
+    printf("\t\t\t\tçŒœæ•¸å­—éŠæˆ²\n\n\n\n");
+    printf("\t\t\t\t1.é–‹å§‹éŠæˆ²\n\n");
+    printf("\t\t\t\t2.å¹«åŠ©\n\n");
+    printf("\t\t\t\t3.é€€å‡º\n\n");
+    printf("\t\t\tè«‹è¼¸å…¥ï¼ˆ1-3ï¼‰ï¼š");
 }
 
-//¥D¨ç¼Æ
+//ä¸»å‡½æ•¸
 int main()
 {
-    void help();//¨ç¼ÆÁn©ú
-    void game(int a[]);//¨ç¼ÆÁn©ú
+    void help();//å‡½æ•¸è²æ˜
+    void game(int a[]);//å‡½æ•¸è²æ˜
 
     int select = 0;
     int a[4] = { 0 };
@@ -31,9 +31,9 @@ int main()
     {
         switch (select)
         {
-        case 1: { system("cls"); game(a); break; } //¶}©l¹CÀ¸
-        case 2: { system("cls"); help(); _getch(); system("cls"); menu(); break; } //À°§U
-        default: printf("¿é¤J¤£¦Xªk¡A½Ğ­«·s¿é¤J!\n"); break;
+        case 1: { system("cls"); game(a); break; } //é–‹å§‹éŠæˆ²
+        case 2: { system("cls"); help(); _getch(); system("cls"); menu(); break; } //å¹«åŠ©
+        default: printf("è¼¸å…¥ä¸åˆæ³•ï¼Œè«‹é‡æ–°è¼¸å…¥!\n"); break;
         }
         scanf("%d", &select);
     }
@@ -42,10 +42,10 @@ int main()
 
 void help()
 {
-    printf("\t\t\tÅwªï¨Ï¥Î¥»µ{§Ç\n\n\n");
-    printf("¹CÀ¸»¡©ú¡G¿é¤J¥|¦ì¼Æ¦r¡A¿é¤J«á¦³´£¥ÜXAYB¡AXªí¥Ü¦³´X­Ó¼Æ¦r»Pµª®×¼Æ¦r¬Û¦P¥B¦ì¸m¬Û¦P¡C\n");
-    printf("Yªí¥Ü¦³´X¦ì¼Æ¦r»Pµª®×¼Æ¦r¬Û¦P¦ı¦ì¸m¤£¥¿½T¡C\n");
-    printf("«ö¥ô·NÁäÄ~Äò............\n");
+    printf("\t\t\tæ­¡è¿ä½¿ç”¨æœ¬ç¨‹åº\n\n\n");
+    printf("éŠæˆ²èªªæ˜ï¼šè¼¸å…¥å››ä½æ•¸å­—ï¼Œè¼¸å…¥å¾Œæœ‰æç¤ºXAYBï¼ŒXè¡¨ç¤ºæœ‰å¹¾å€‹æ•¸å­—èˆ‡ç­”æ¡ˆæ•¸å­—ç›¸åŒä¸”ä½ç½®ç›¸åŒã€‚\n");
+    printf("Yè¡¨ç¤ºæœ‰å¹¾ä½æ•¸å­—èˆ‡ç­”æ¡ˆæ•¸å­—ç›¸åŒä½†ä½ç½®ä¸æ­£ç¢ºã€‚\n");
+    printf("æŒ‰ä»»æ„éµç¹¼çºŒ............\n");
 }
 
 void game(int a[])
@@ -54,26 +54,26 @@ void game(int a[])
     int i = 0, j = 0;
     while (1)
     {
-        //¥Í¦¨4­ÓÀH¾÷¼Æ¦r
+        //ç”Ÿæˆ4å€‹éš¨æ©Ÿæ•¸å­—
         do
         {
             for (i = 0; i < 4; i++)
                 a[i] = rand() % 10;
             same(a);
-        } while (u); //¨Ï¥Î¥ş§½ÅÜ¶qu
+        } while (u); //ä½¿ç”¨å…¨å±€è®Šé‡u
         if (a[0] != 0)
             break;
     }
     int k = 1, A = 0, B = 0, N = 8, pick = 0;
-    printf("½Ğ¿é¤J²q·Qªº¥|¦ì¼Æ\n");
+    printf("è«‹è¼¸å…¥çŒœæƒ³çš„å››ä½æ•¸\n");
     while (A != 4 && k <= N)
     {
         A = 0, B = 0;
-        printf("²Ä%d¦¸¡G", k);
+        printf("ç¬¬%dæ¬¡ï¼š", k);
         scanf("%d", &pick);
         while (pick < 999 || pick > 10000)
         {
-            printf("¿é¤J¤£¦Xªk¡I\n");
+            printf("è¼¸å…¥ä¸åˆæ³•ï¼\n");
             scanf("%d", &pick);
         }
         for (i = 3; i >= 0; i--)
@@ -81,7 +81,7 @@ void game(int a[])
             b[i] = pick % 10;
             pick = pick / 10;
         }
-        //¤ñ¸û¹ïÀ³¦ì¸m¤Wªº¼Æ
+        //æ¯”è¼ƒå°æ‡‰ä½ç½®ä¸Šçš„æ•¸
         for (i = 0; i < 4; i++)
             for (j = 0; j < 4; j++)
                 if (a[i] == b[j])
@@ -91,24 +91,24 @@ void game(int a[])
                         B++;
         printf("%dA%dB\n", A, B);
 
-        // Åã¥Ü¶i«×±ø
+        // é¡¯ç¤ºé€²åº¦æ¢
         progress_bar(k, N);
 
         if (A == 4)
         {
-            printf("®¥³ß¡A¹CÀ¸¦¨¥\¡I\n");
+            printf("æ­å–œï¼ŒéŠæˆ²æˆåŠŸï¼\n");
         }
         k++;
     }
     if (A != 4 && k > N)
     {
-        printf("¹CÀ¸¥¢±Ñ¡I\n");
-        printf("¥¿½Tµª®×¬O¡G");
+        printf("éŠæˆ²å¤±æ•—ï¼\n");
+        printf("æ­£ç¢ºç­”æ¡ˆæ˜¯ï¼š");
         for (i = 0; i < 4; i++)
             printf("%d", a[i]);
         printf("\n");
     }
-    printf("¿é¤J 1 Ä~Äò¹CÀ¸¡A¿é¤J 2 ªğ¦^µæ³æ¡A¿é¤J 0 °h¥X¹CÀ¸¡G");
+    printf("è¼¸å…¥ 1 ç¹¼çºŒéŠæˆ²ï¼Œè¼¸å…¥ 2 è¿”å›èœå–®ï¼Œè¼¸å…¥ 0 é€€å‡ºéŠæˆ²ï¼š");
     while (1)
     {
         scanf("%d", &pick);
@@ -125,25 +125,14 @@ void game(int a[])
         else if (pick == 0)
             exit(0);
         else
-            printf("¿é¤J¿ù»~¡A½Ğ­«·s¿é¤J¡I\n");
+            printf("è¼¸å…¥éŒ¯èª¤ï¼Œè«‹é‡æ–°è¼¸å…¥ï¼\n");
     }
 }
-
-int same(int num[])
-{
-    u = 0;
-    for (int i = 0; i < 3; i++)
-        for (int j = i + 1; j < 4; j++)
-            if (num[i] == num[j])
-                u = 1;
-    return u;
-}
-
-// Åã¥Ü¶i«×±ø¨ç¼Æ
+// é¡¯ç¤ºé€²åº¦æ¢å‡½æ•¸
 void progress_bar(int current, int total)
 {
     int percent = (current * 100) / total;
-    int bar_width = 50; // ¶i«×±øÁ`¼e«×
+    int bar_width = 50; // é€²åº¦æ¢ç¸½å¯¬åº¦
     int pos = (current * bar_width) / total;
 
     printf("[");
@@ -156,5 +145,5 @@ void progress_bar(int current, int total)
         else
             printf(" ");
     }
-    printf("] ³Ñ¤U%d¦¸¾÷·|\n", 8-current);
+    printf("] å‰©ä¸‹%dæ¬¡æ©Ÿæœƒ\n", 8-current);
 }
