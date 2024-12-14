@@ -173,41 +173,41 @@ Game ENDP
 ;---------------------------
 creatNUM PROC
 ;---------------------------
-    call Randomize
+    call Randomize	
     mov esi, 0
-    mov ecx, 4
+    mov ecx, 4		; 生成4個數字
 
 createN:
-    mov eax, 10
-    call RandomRange
+    mov eax, 10		; 範圍介於0~9之間
+    call RandomRange	; 生成隨機數
     mov [randNum + esi * 4], eax
 
-    cmp esi, 0
-    jne L1
+    cmp esi, 0		
+    jne L1		; 若不是生成第0項，跳至L1
     inc esi
     loop createN
 
     L1:
-        push ecx
-        mov ecx, esi        ; 迴圈次數
-        mov edi, esi        ; 前面元素
+        push ecx	    ; createN的ecx
+        mov ecx, esi        ; 迴圈次數，第1項時為1，依此類推
+        mov edi, esi        ; 指向前面的數字
         L3:
-            dec edi
-            mov ebx, [randNum + edi * 4]
-            cmp eax, ebx
-            je same
+            dec edi		; 比較生成數與前面的數字是否重複
+            mov ebx, [randNum + edi * 4]	; 前面數字的值
+            cmp eax, ebx			; 生成數存放在EAX
+            je same				; 如果重複跳至same
             loop L3
 
-            pop ecx
-            cmp ecx, 1
-            je quit
-            dec ecx
-            inc esi
-            jmp createN
+            pop ecx		; 沒有重複則彈出createN的ecx
+            cmp ecx, 1		
+            je quit		; 若ecx = 1，代表4位數生成完畢，結束生成
+            dec ecx		; 否則ecx - 1
+            inc esi		; esi + 1
+            jmp createN		繼續生成下一個數字
         
         same:
-            pop ecx
-            jmp createN
+            pop ecx		; 彈出createN的ecx
+            jmp createN		; 重新生成隨機數
 
 quit:
     ret
