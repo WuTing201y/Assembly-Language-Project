@@ -62,7 +62,7 @@ void game(int randNum[]) // 比較用戶輸入數和隨機數，並產生提示�
         A = 0, B = 0;
 
         scanf("%d", &pick); // 玩家從鍵盤輸入數據
-        while (pick < 0 || pick > 9999){
+        while (pick < 1000 || pick > 9999){
             printf("Invalid input!\n");
             scanf("%d", &pick);
         }
