@@ -15,16 +15,24 @@ int main()
     void game(int randNum[]); // 函數聲明
 
     int select = 0;
-    int randNum[4] = { 0 };
+    int randNum[4] = {0};
     srand((unsigned)time(NULL)); // 隨機數種，只調用一次即可
     menu();
     scanf("%d", &select);
     while (select != 3)
     {   switch (select){
-        case 1: { game(randNum); break; } // 開始遊戲
-        case 2: { help(); break; } // 幫助
-        case 3: { break;} //退出遊戲
-        default: printf("Invalid input! Please enter (1-3): "); break; // 輸入1.2.3.以外的數
+        case 1: {    // 開始遊戲
+            game(randNum); break; 
+        } 
+        case 2: { // 幫助
+            help(); break; 
+        } 
+        case 3: { //退出遊戲
+            break;
+        } 
+        default: 
+            printf("Invalid input! Please enter (1-3): "); 
+            break; // 輸入1.2.3.以外的數
         }
         if (select != 3){
             scanf("%d", &select);
@@ -52,8 +60,8 @@ void help() // 遊戲規說明函數
 }
 
 void game(int randNum[]) // 比較用戶輸入數和隨機數，並產生提示訊息
-{   int getNum[4] = {0};
-
+{   
+    int getNum[4] = {0};
     creatNUM(randNum);
 
     int tryCase = 1, A = 0, B = 0, total = 8, pick = 0;
@@ -91,32 +99,38 @@ void game(int randNum[]) // 比較用戶輸入數和隨機數，並產生提示�
         puts("");
         printf("Game failed!\n");
         printf("The correct answer is: ");
-        for (int i = 0; i < 4; i++)
+        for (int i = 0; i < 4; i++){
             printf("%d", randNum[i]);
+        }
         printf("\n\n");
     }
     printf("Enter 1 to continue the game, enter 0 to exit the game: ");
     while (1){
         scanf("%d", &pick);
-        if (pick == 1) game(randNum);
+        if (pick == 1){
+            game(randNum);
+        }
         else if (pick == 0){
             printf("Thanks for playing!\n");
             exit(0);
         }
-        else printf("Invalid input! Please enter (1-3): ");
+        else{
+            printf("Invalid input! Please enter (1-3): ");
+        }
     }
 }
 void creatNUM(int randNum[])
 {
-    while (1)
-    {// 生成4個隨機數字
+    while (1)   // 生成4個隨機數字
+    {
         do{
             for (int i = 0; i < 4; i++)
                 randNum[i] = rand() % 10;
             same(randNum);
         } while (u); //u=1時，重新生成
-        if (randNum[0] != 0)
+        if (randNum[0] != 0){
             break;
+        }
     }
 }
 int same(int num[]) // 判斷產生的隨機數各個位置上有沒有重複的函數
